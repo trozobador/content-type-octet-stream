@@ -5,8 +5,11 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using RestSharp;
 
-namespace CSHttpClientSample
+using System.Text.Json;
+using System.Text.Json.Serialization;
+namespace content_type_octet_stream
 {
     static class Program
     {
@@ -81,6 +84,27 @@ namespace CSHttpClientSample
 
                         Console.WriteLine("Não retornou ID " + ex.Message); ;
                     }
+
+
+                    var readclient = new RestClient($"https://brazilsouth.api.cognitive.microsoft.com/vision/v3.0/read/analyzeResults/{id}");
+                    readclient.Timeout = -1;
+                    var request = new RestRequest(Method.GET);
+                    request.AddHeader("Content-Type", "application/json");
+                    request.AddHeader("Ocp-Apim-Subscription-Key", subscriptionKey);
+                    IRestResponse readresponse = readclient.Execute(request);
+
+
+                    var objetoresult = JsonSerializer.Deserialize<ReadReturn>(readresponse.Content);
+
+                    foreach (var r in objetoresult.analyzeResult.readResults)
+                    {
+                        foreach(var l in r.lines)
+                        {
+                            Console.WriteLine(l.text);
+                        }
+                    }
+
+
 
 
 
