@@ -13,23 +13,18 @@ namespace content_type_octet_stream
 {
     static class Program
     {
-        // Add your Computer Vision subscription key and endpoint to your environment variables.
+        // Adicione sua subscription key do Computer Vision às variáveis ​​de ambiente.
         static string subscriptionKey = Environment.GetEnvironmentVariable("COMPUTER_VISION_SUBSCRIPTION_KEY");
         
 
-        static string endpoint = "https://brazilsouth.api.cognitive.microsoft.com/vision/v3.0/read/analyze?language=pt";
+        static string uriBase = "https://brazilsouth.api.cognitive.microsoft.com/vision/v3.0/read/analyze?language=pt";
 
-        // the Analyze method endpoint
-        static string uriBase = endpoint;
-
-        // Image you want analyzed (add to your bin/debug/netcoreappX.X folder)
-        // For sample images, download one from here (png or jpg):
-        // https://github.com/Azure-Samples/cognitive-services-sample-data-files/tree/master/ComputerVision/Images
+        // Imagem que deseja realizar o OCR
         static string imageFilePath = Environment.CurrentDirectory + @"\Algumtexto.png";
 
         public static void Main()
         {
-            // Call the API
+            // Chamada das APIs
             MakeAnalysisRequest(imageFilePath).Wait();
 
             Console.WriteLine("\nPress Enter to exit...");
@@ -37,10 +32,10 @@ namespace content_type_octet_stream
         }
 
         /// <summary>
-        /// Gets the analysis of the specified image file by using
-        /// the Computer Vision REST API.
+        /// recupera o texto contido em uma imagem utilizando
+        /// Computer Vision REST API.
         /// </summary>
-        /// <param name="imageFilePath">The image file to analyze.</param>
+        /// <param name="imageFilePath">O arquivo da imagem para analizar</param>
         static async Task MakeAnalysisRequest(string imageFilePath)
         {
             try
@@ -51,26 +46,20 @@ namespace content_type_octet_stream
                 client.DefaultRequestHeaders.Add(
                     "Ocp-Apim-Subscription-Key", subscriptionKey);
 
-
-                // Assemble the URI for the REST API method.
-                string uri = uriBase; // + "?" + requestParameters;
+                string uri = uriBase; 
 
                 HttpResponseMessage response;
 
-                // Read the contents of the specified local image
-                // into a byte array.
+                // Converte a image para Byte Array
                 byte[] byteData = GetImageAsByteArray(imageFilePath);
 
-                // Add the byte array as an octet stream to the request body.
+                // Adiciona o byte array em um octet stream no corpo do Request.
                 using (ByteArrayContent content = new ByteArrayContent(byteData))
                 {
-                    // This example uses the "application/octet-stream" content type.
-                    // The other content types you can use are "application/json"
-                    // and "multipart/form-data".
+                    // use "application/octet-stream" content type.
                     content.Headers.ContentType =
                         new MediaTypeHeaderValue("application/octet-stream");
 
-                    // Asynchronously call the REST API method.
                     response = await client.PostAsync(uri, content);
 
                     string id = string.Empty;
@@ -86,6 +75,7 @@ namespace content_type_octet_stream
                     }
 
 
+                    // Pega o ID retornado pela requisição anterior e chama a API para obter o resultado da leitura. 
                     var readclient = new RestClient($"https://brazilsouth.api.cognitive.microsoft.com/vision/v3.0/read/analyzeResults/{id}");
                     readclient.Timeout = -1;
                     var request = new RestRequest(Method.GET);
@@ -104,18 +94,8 @@ namespace content_type_octet_stream
                         }
                     }
 
-
-
-
-
                 }
 
-                // Asynchronously get the JSON response.
-                string contentString = await response.Content.ReadAsStringAsync();
-
-                // Display the JSON response.
-                Console.WriteLine("\nResponse:\n\n{0}\n",
-                    JToken.Parse(contentString).ToString());
             }
             catch (Exception e)
             {
@@ -124,17 +104,15 @@ namespace content_type_octet_stream
         }
 
         /// <summary>
-        /// Returns the contents of the specified file as a byte array.
+        /// Converte o Arquivo para Byte Array
         /// </summary>
-        /// <param name="imageFilePath">The image file to read.</param>
-        /// <returns>The byte array of the image data.</returns>
+        /// <param name="imageFilePath"></param>
+        /// <returns></returns>
         static byte[] GetImageAsByteArray(string imageFilePath)
         {
-            // Open a read-only file stream for the specified file.
             using (FileStream fileStream =
                 new FileStream(imageFilePath, FileMode.Open, FileAccess.Read))
             {
-                // Read the file's contents into a byte array.
                 BinaryReader binaryReader = new BinaryReader(fileStream);
                 return binaryReader.ReadBytes((int)fileStream.Length);
             }
